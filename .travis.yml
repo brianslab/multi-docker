@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t brianslab/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true brianslab/react-test npm test
+
+after_success:
+  - docker build -t brianslab/multi-client ./client
+  - docker build -t brianslab/multi-nginx ./nginx
+  - docker build -t brianslab/multi-server ./server
+  - docker build -t brianslab/multi-worker ./worker
+  # login to docker cli
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # push images to dockerhub
+  - docker push brianslab/multi-client
+  - docker push brianslab/multi-nginx
+  - docker push brianslab/multi-server
+  - docker push brianslab/multi-worker
